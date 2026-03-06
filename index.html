@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>拟真哈气起雾窗户</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #111; font-family: sans-serif; }
+        #background {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://images.unsplash.com/photo-1493514789931-586cb221d7a7?q=80&w=2000') no-repeat center center;
+            background-size: cover; z-index: 1;
+        }
+        #fogCanvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2; filter: blur(1px); opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        #startScreen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 10;
+            display: flex; justify-content: center; align-items: center; color: white; flex-direction: column;
+        }
+        #startBtn {
+            padding: 15px 30px; border: 1px solid white; cursor: pointer;
+            background: rgba(255,255,255,0.2); border-radius: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div id="background"></div>
+    <canvas id="fogCanvas"></canvas>
+    <div id="startScreen">
+        <h1>准备好了吗？</h1>
+        <div id="startBtn">点击开启交互，然后对着麦克风哈气</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('fogCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let isDrawing = false;
+        let lastX = 0; let lastY = 0;
+        let hasFogged = false;
+        let dwellTimer = 0;
+        const DWELL_THRESHOLD = 8;
+        let droplets = [];
+
+        class Droplet {
+            constructor(x, y, radius) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius || (Math.random() * 3 + 4);
+                this.speedY = 0.03 + Math.random() * 0.1;
+                this.gravity = 0.002;
+                this.wiggle = 0;
+            }
+            update() {
+                if (Math.random() > 0.8) {
+                    this.wiggle = (Math.random() - 0.5) * 0.2;
+                }
+                this.speedY += this.gravity;
+                this.y += this.speedY;
+                this.x += this.wiggle;
+            }
+        }
+
+        function initCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        // --- 核心补丁：起雾函数 ---
+        function fillFog() {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = 'rgba(230, 235, 240, 0.9)';
+            ctx.fillRect(0, 0, width, height);
+            canvas.style.opacity = 1;
+            hasFogged = true;
+            animate(); // 启动动画循环
+        }
+
+        function wipe(x, y) {
+            if (!hasFogged) return;
+            const dist = Math.sqrt(Math.pow(x - lastX, 2) + Math.pow(y - lastY, 2));
+
+            if (dist < 5) {
+                dwellTimer++;
+                if (dwellTimer > DWELL_THRESHOLD) {
+                    const startRadius = 8 + Math.random() * 5;
+                    droplets.push(new Droplet(x, y, startRadius * 0.6));
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.beginPath();
+                    ctx.arc(x, y, startRadius, 0, Math.PI * 2);
+                    ctx.fill();
+                    dwellTimer = 0;
+                }
+            } else {
+                dwellTimer = 0;
+            }
+
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+            ctx.lineWidth = 16;
+            ctx.shadowBlur = 10; ctx.shadowColor = 'black';
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            lastX = x; lastY = y;
+        }
+
+        function animate() {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.shadowBlur = 4;
+            for (let i = droplets.length - 1; i >= 0; i--) {
+                const drop = droplets[i];
+                drop.update();
+                ctx.beginPath();
+                ctx.ellipse(drop.x, drop.y, drop.radius * 0.9, drop.radius * 1.1, 0, 0, Math.PI * 2);
+                ctx.fill();
+                if (drop.y > height + 20) droplets.splice(i, 1);
+            }
+            requestAnimationFrame(animate);
+        }
+
+        async function startAudioDetection() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const analyser = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+                analyser.fftSize = 256;
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                function detect() {
+                    if (hasFogged) return;
+                    analyser.getByteFrequencyData(dataArray);
+                    let sum = 0;
+                    for (let i = 0; i < dataArray.length / 2; i++) sum += dataArray[i];
+                    let average = sum / (dataArray.length / 2);
+                    if (average > 50) {
+                        fillFog();
+                    } else {
+                        requestAnimationFrame(detect);
+                    }
+                }
+                detect();
+            } catch (e) {
+                alert("请允许麦克风权限以开启哈气感应。");
+            }
+        }
+
+        function getPos(e) {
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX, y: clientY };
+        }
+
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; const p = getPos(e); lastX = p.x; lastY = p.y; }, { passive: false });
+        window.addEventListener('touchmove', (e) => { e.preventDefault(); if(isDrawing) wipe(getPos(e).x, getPos(e).y); }, { passive: false });
+        window.addEventListener('touchend', () => isDrawing = false);
+        canvas.addEventListener('mousedown', (e) => { isDrawing = true; const p = getPos(e); lastX = p.x; lastY = p.y; });
+        window.addEventListener('mousemove', (e) => { if(isDrawing) wipe(getPos(e).x, getPos(e).y); });
+        window.addEventListener('mouseup', () => isDrawing = false);
+        window.addEventListener('resize', initCanvas);
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            document.getElementById('startScreen').style.display = 'none';
+            initCanvas();
+            startAudioDetection();
+        });
+    </script>
+</body>
+</html>
