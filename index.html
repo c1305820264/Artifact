@@ -3,470 +3,399 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>一点空明 - 粒子山石</title>
+  <title>一点空明是何处</title>
   <style>
-    * { box-sizing: border-box; }
-    html, body {
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
       height: 100%;
       overflow: hidden;
-      background: radial-gradient(circle at 50% 30%, #20242a 0%, #0d0f12 55%, #060708 100%);
-      color: #e8e1d1;
+      background:
+        radial-gradient(circle at 65% 45%, rgba(48, 63, 88, 0.18), transparent 28%),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03), transparent 40%),
+        linear-gradient(180deg, #050608 0%, #090d12 45%, #040506 100%);
+      color: #ece7db;
       font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
     }
-    #app { position: fixed; inset: 0; }
-    .overlay {
-      position: fixed;
+
+    .page {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .grain {
+      position: absolute;
       inset: 0;
       pointer-events: none;
+      opacity: 0.05;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.45) 0.6px, transparent 0.8px),
+        radial-gradient(circle at 80% 70%, rgba(255,255,255,0.35) 0.6px, transparent 0.8px);
+      background-size: 140px 140px, 180px 180px;
+      mix-blend-mode: screen;
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at center, transparent 48%, rgba(0,0,0,0.28) 72%, rgba(0,0,0,0.58) 100%);
+      z-index: 6;
+    }
+
+    .content {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+
+    .left {
+      width: 42%;
+      min-width: 320px;
+      padding: 28px 24px 22px 24px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 28px 24px 20px;
-      background:
-        radial-gradient(circle at 50% 70%, rgba(255,255,255,0.03), transparent 35%),
-        linear-gradient(to bottom, rgba(0,0,0,0.2), transparent 22%, transparent 78%, rgba(0,0,0,0.3));
+      pointer-events: none;
     }
-    .title-wrap {
-      max-width: 760px;
-    }
+
     .eyebrow {
       font-size: 13px;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(232,225,209,0.55);
-      margin-bottom: 10px;
+      color: rgba(236,231,219,0.55);
+      margin-bottom: 14px;
     }
+
     h1 {
-      margin: 0;
-      font-size: clamp(34px, 7vw, 74px);
-      line-height: 1.06;
+      font-size: clamp(42px, 6.5vw, 92px);
+      line-height: 1.02;
+      font-weight: 700;
       letter-spacing: 0.04em;
-      font-weight: 600;
-      text-shadow: 0 6px 24px rgba(0,0,0,0.35);
+      text-shadow: 0 8px 28px rgba(0,0,0,0.38);
+      margin-bottom: 18px;
     }
-    .sub {
-      margin-top: 10px;
-      font-size: clamp(13px, 2vw, 18px);
-      line-height: 1.8;
-      color: rgba(232,225,209,0.72);
+
+    .desc {
       max-width: 520px;
+      font-size: clamp(16px, 1.7vw, 26px);
+      line-height: 1.8;
+      color: rgba(236,231,219,0.74);
     }
+
     .footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: end;
-      gap: 20px;
-      color: rgba(232,225,209,0.60);
       font-size: 12px;
       line-height: 1.8;
+      color: rgba(236,231,219,0.48);
       letter-spacing: 0.04em;
     }
-    .hint {
-      text-align: right;
-      max-width: 280px;
+
+    .stage {
+      position: relative;
+      flex: 1;
+      overflow: hidden;
     }
-    .loading {
-      position: fixed;
+
+    .stone-wrap {
+      position: absolute;
       inset: 0;
-      display: grid;
-      place-items: center;
-      background: #060708;
-      color: rgba(232,225,209,0.8);
-      letter-spacing: 0.08em;
-      transition: opacity 0.45s ease;
-      z-index: 9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 1600px;
     }
-    .loading.hide { opacity: 0; pointer-events: none; }
-    .credit {
-      opacity: 0.74;
+
+    .stone {
+      position: relative;
+      width: min(48vw, 680px);
+      aspect-ratio: 0.78 / 1.22;
+      transform-style: preserve-3d;
+      transform: translateX(7%) translateY(2%) rotateY(0deg) rotateX(0deg) scale(1);
+      transition: transform 0.18s ease-out;
+      filter: drop-shadow(0 28px 52px rgba(0,0,0,0.45));
+      animation: stoneFloat 8s ease-in-out infinite;
     }
-    @media (max-width: 700px) {
-      .footer {
-        flex-direction: column;
-        align-items: start;
+
+    .stone-img,
+    .stone-shadow,
+    .stone-highlight,
+    .stone-glow,
+    .stone-fog {
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      pointer-events: none;
+    }
+
+    .stone-img {
+      background-image: url('./artifact.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      filter:
+        brightness(0.58)
+        contrast(1.12)
+        saturate(0.84)
+        grayscale(0.18);
+      opacity: 0.96;
+      transform: translateZ(0);
+      animation: stoneAppear 1.8s ease-out forwards;
+    }
+
+    .stone-shadow {
+      background-image: url('./artifact.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      filter: blur(28px) brightness(0.28);
+      opacity: 0.42;
+      transform: translateZ(-50px) scale(1.03) translateY(14px);
+    }
+
+    .stone-fog {
+      background:
+        radial-gradient(circle at 52% 45%, rgba(255,255,255,0.05), transparent 28%),
+        radial-gradient(circle at 60% 58%, rgba(190,210,255,0.06), transparent 22%),
+        radial-gradient(circle at 48% 68%, rgba(255,255,255,0.04), transparent 18%);
+      mix-blend-mode: screen;
+      filter: blur(26px);
+      opacity: 0.55;
+      animation: fogBreath 6s ease-in-out infinite;
+    }
+
+    .stone-glow {
+      background:
+        radial-gradient(circle at 54% 40%, rgba(255,245,220,0.08), transparent 16%),
+        radial-gradient(circle at 58% 62%, rgba(160,190,255,0.07), transparent 14%);
+      filter: blur(18px);
+      opacity: 0.7;
+      mix-blend-mode: screen;
+    }
+
+    .stone-highlight {
+      background:
+        linear-gradient(
+          115deg,
+          rgba(255,255,255,0) 18%,
+          rgba(255,255,255,0.02) 30%,
+          rgba(255,246,220,0.14) 40%,
+          rgba(255,253,245,0.34) 47%,
+          rgba(255,244,205,0.12) 56%,
+          rgba(255,255,255,0.01) 66%,
+          rgba(255,255,255,0) 74%
+        );
+      mix-blend-mode: screen;
+      filter: blur(8px);
+      opacity: 0.95;
+      transform: translateX(-82%) skewX(-10deg);
+      animation: lightSweep 5.6s ease-in-out infinite;
+    }
+
+    .hint {
+      position: absolute;
+      right: 26px;
+      bottom: 22px;
+      z-index: 12;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: rgba(236,231,219,0.52);
+      user-select: none;
+    }
+
+    .ambient-light {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 70% 52%, rgba(135,165,255,0.10), transparent 24%),
+        radial-gradient(circle at 63% 44%, rgba(255,246,220,0.07), transparent 18%);
+      filter: blur(26px);
+      z-index: 3;
+      animation: ambientPulse 7s ease-in-out infinite;
+    }
+
+    @keyframes lightSweep {
+      0%   { transform: translateX(-90%) skewX(-10deg); opacity: 0; }
+      12%  { opacity: 0.20; }
+      28%  { opacity: 0.92; }
+      42%  { opacity: 0.38; }
+      58%  { opacity: 0.08; }
+      100% { transform: translateX(105%) skewX(-10deg); opacity: 0; }
+    }
+
+    @keyframes stoneAppear {
+      0% {
+        opacity: 0;
+        filter: brightness(0.2) contrast(1.05) saturate(0.8) blur(12px);
+        transform: scale(0.985);
       }
-      .hint { text-align: left; max-width: none; }
+      100% {
+        opacity: 0.96;
+        filter: brightness(0.58) contrast(1.12) saturate(0.84) grayscale(0.18);
+        transform: scale(1);
+      }
+    }
+
+    @keyframes stoneFloat {
+      0%, 100% { transform: translateX(7%) translateY(2%) rotateY(0deg) rotateX(0deg) scale(1); }
+      50%      { transform: translateX(7%) translateY(0.8%) rotateY(0deg) rotateX(0deg) scale(1.008); }
+    }
+
+    @keyframes fogBreath {
+      0%, 100% { opacity: 0.36; transform: scale(1); }
+      50%      { opacity: 0.62; transform: scale(1.02); }
+    }
+
+    @keyframes ambientPulse {
+      0%, 100% { opacity: 0.55; }
+      50%      { opacity: 0.9; }
+    }
+
+    @media (max-width: 980px) {
+      .content {
+        flex-direction: column;
+      }
+
+      .left {
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        padding: 22px 18px 0 18px;
+        justify-content: flex-start;
+        gap: 18px;
+      }
+
+      .stage {
+        min-height: 56vh;
+      }
+
+      .stone {
+        width: min(76vw, 560px);
+        transform: translateX(0%) translateY(3%) rotateY(0deg) rotateX(0deg) scale(1);
+      }
+
+      h1 {
+        font-size: clamp(34px, 10vw, 64px);
+      }
+
+      .desc {
+        font-size: 16px;
+        line-height: 1.75;
+      }
+
+      .footer {
+        display: none;
+      }
+
+      .hint {
+        left: 18px;
+        right: auto;
+        bottom: 16px;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="app"></div>
-  <div class="loading" id="loading">山石正在显形…</div>
-  <div class="overlay">
-    <div class="title-wrap">
-      <div class="eyebrow">Particle Study / Suzhou Museum</div>
-      <h1>一点空明是何处</h1>
-      <div class="sub">
-        以粒子重构一块石。靠近时散，离开时聚；像气息，也像观看本身。
-      </div>
+  <div class="page">
+    <div class="ambient-light"></div>
+    <div class="grain"></div>
+    <div class="vignette"></div>
+
+    <div class="content">
+      <section class="left">
+        <div>
+          <div class="eyebrow">PARTICLE STUDY / SUZHOU MUSEUM</div>
+          <h1>一点空明是何处</h1>
+          <p class="desc">
+            光并不解释石头，只是短暂地掠过它。<br />
+            洞口、褶皱、凹凸与阴影，于一瞬间显形；<br />
+            而“空明”恰恰藏在这片被照亮的寂静里。
+          </p>
+        </div>
+
+        <div class="footer">
+          宋 苏轼《双石（并引）》 / 光扫石面交互原型
+        </div>
+      </section>
+
+      <section class="stage">
+        <div class="stone-wrap">
+          <div class="stone" id="stone">
+            <div class="stone-shadow"></div>
+            <div class="stone-img"></div>
+            <div class="stone-fog"></div>
+            <div class="stone-glow"></div>
+            <div class="stone-highlight" id="highlight"></div>
+          </div>
+        </div>
+      </section>
     </div>
-    <div class="footer">
-      <div class="credit">宋 苏轼《双石（并引）》 / 交互原型</div>
-      <div class="hint">拖动可轻微旋转 · 鼠标或手指靠近会扰动粒子</div>
-    </div>
+
+    <div class="hint">移动鼠标，光会轻微偏转</div>
   </div>
 
-  <script type="module">
-    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+  <script>
+    const stone = document.getElementById('stone');
+    const highlight = document.getElementById('highlight');
 
-    const APP = document.getElementById('app');
-    const LOADING = document.getElementById('loading');
+    let mouseX = window.innerWidth * 0.7;
+    let mouseY = window.innerHeight * 0.5;
 
-    const config = {
-      imageUrl: './artifact.jpg',
+    let currentRotateX = 0;
+    let currentRotateY = 0;
+    let targetRotateX = 0;
+    let targetRotateY = 0;
 
-      crop: { x: 260, y: 560, width: 520, height: 960 },
+    let currentLightX = 0;
+    let targetLightX = 0;
 
-      sampleGap: 5,
-      particleSize: 2.1,
-      depth: 42,
-      brightnessThreshold: 172,
-      edgeBoost: 16,
-      drift: 1.15,
-      returnSpeed: 0.045,
-      damping: 0.90,
-      repelRadius: 62,
-      repelForce: 0.72,
-      autoRotateStrength: 0.12,
-      ambientPointCount: 420
-    };
+    function onMove(x, y) {
+      mouseX = x;
+      mouseY = y;
 
-    let scene, camera, renderer, stoneGroup, particleSystem, ambientSystem;
-    let basePositions, velocities, randomSeeds;
-    let pointer = new THREE.Vector2(9999, 9999);
-    let pointerDown = false;
-    let rotationTargetX = 0;
-    let rotationTargetY = 0;
-    let clock = new THREE.Clock();
+      const nx = (mouseX / window.innerWidth - 0.5);
+      const ny = (mouseY / window.innerHeight - 0.5);
 
-    init();
-
-    async function init() {
-      scene = new THREE.Scene();
-
-      camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 2000);
-      camera.position.set(0, 0, 410);
-
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      APP.appendChild(renderer.domElement);
-
-      scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-
-      const pointLight = new THREE.PointLight(0xf8efe1, 1.2, 1200);
-      pointLight.position.set(180, 220, 320);
-      scene.add(pointLight);
-
-      const fillLight = new THREE.PointLight(0xb9c6ff, 0.35, 1000);
-      fillLight.position.set(-220, -120, 180);
-      scene.add(fillLight);
-
-      stoneGroup = new THREE.Group();
-      scene.add(stoneGroup);
-
-      await buildStoneParticles();
-      buildAmbientParticles();
-      bindEvents();
-      resize();
-      animate();
-      setTimeout(() => LOADING.classList.add('hide'), 300);
+      targetRotateY = nx * 10;
+      targetRotateX = -ny * 6;
+      targetLightX = nx * 20;
     }
 
-    async function buildStoneParticles() {
-      const img = await loadImage(config.imageUrl);
-      const { points } = sampleImageToPoints(img);
+    window.addEventListener('mousemove', (e) => {
+      onMove(e.clientX, e.clientY);
+    });
 
-      const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(points.length * 3);
-      const colors = new Float32Array(points.length * 3);
-      basePositions = new Float32Array(points.length * 3);
-      velocities = new Float32Array(points.length * 3);
-      randomSeeds = new Float32Array(points.length);
-
-      for (let i = 0; i < points.length; i++) {
-        const p = points[i];
-        const i3 = i * 3;
-
-        positions[i3] = p.x;
-        positions[i3 + 1] = p.y;
-        positions[i3 + 2] = p.z;
-
-        basePositions[i3] = p.x;
-        basePositions[i3 + 1] = p.y;
-        basePositions[i3 + 2] = p.z;
-
-        const shade = p.shade / 255;
-        const r = 0.72 + shade * 0.18;
-        const g = 0.72 + shade * 0.16;
-        const b = 0.73 + shade * 0.14;
-        colors[i3] = r;
-        colors[i3 + 1] = g;
-        colors[i3 + 2] = b;
-
-        randomSeeds[i] = Math.random() * Math.PI * 2;
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches && e.touches[0]) {
+        onMove(e.touches[0].clientX, e.touches[0].clientY);
       }
-
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-      const material = new THREE.PointsMaterial({
-        size: config.particleSize,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.95,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        sizeAttenuation: true
-      });
-
-      particleSystem = new THREE.Points(geometry, material);
-      stoneGroup.add(particleSystem);
-      stoneGroup.position.y = -24;
-    }
-
-    function sampleImageToPoints(img) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-      const crop = config.crop;
-      canvas.width = crop.width;
-      canvas.height = crop.height;
-      ctx.drawImage(
-        img,
-        crop.x, crop.y, crop.width, crop.height,
-        0, 0, crop.width, crop.height
-      );
-
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-
-      const scale = Math.min(window.innerWidth * 0.42 / crop.width, window.innerHeight * 0.62 / crop.height) * 2.0;
-      const worldW = crop.width * scale;
-      const worldH = crop.height * scale;
-
-      const points = [];
-
-      function getBrightnessAt(px, py) {
-        const idx = (py * canvas.width + px) * 4;
-        const r = data[idx];
-        const g = data[idx + 1];
-        const b = data[idx + 2];
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-      }
-
-      for (let y = 0; y < canvas.height; y += config.sampleGap) {
-        for (let x = 0; x < canvas.width; x += config.sampleGap) {
-          const idx = (y * canvas.width + x) * 4;
-          const a = data[idx + 3];
-          if (a < 10) continue;
-
-          const r = data[idx];
-          const g = data[idx + 1];
-          const b = data[idx + 2];
-          const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-
-          if (brightness > config.brightnessThreshold) continue;
-
-          const bx1 = x > 1 ? getBrightnessAt(x - 1, y) : brightness;
-          const bx2 = x < canvas.width - 2 ? getBrightnessAt(x + 1, y) : brightness;
-          const by1 = y > 1 ? getBrightnessAt(x, y - 1) : brightness;
-          const by2 = y < canvas.height - 2 ? getBrightnessAt(x, y + 1) : brightness;
-          const edge = Math.abs(brightness - bx1) + Math.abs(brightness - bx2) + Math.abs(brightness - by1) + Math.abs(brightness - by2);
-
-          const nx = (x / canvas.width - 0.5) * worldW;
-          const ny = -(y / canvas.height - 0.5) * worldH;
-
-          const darkness = (255 - brightness) / 255;
-          const z = (darkness * config.depth) + (edge / 255) * config.edgeBoost + (Math.random() - 0.5) * 5.5;
-
-          points.push({
-            x: nx,
-            y: ny,
-            z: z - config.depth * 0.5,
-            shade: brightness
-          });
-        }
-      }
-
-      return { points };
-    }
-
-    function buildAmbientParticles() {
-      const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(config.ambientPointCount * 3);
-      const colors = new Float32Array(config.ambientPointCount * 3);
-
-      for (let i = 0; i < config.ambientPointCount; i++) {
-        const i3 = i * 3;
-        positions[i3] = (Math.random() - 0.5) * 900;
-        positions[i3 + 1] = (Math.random() - 0.5) * 700;
-        positions[i3 + 2] = (Math.random() - 0.5) * 280;
-
-        const c = 0.55 + Math.random() * 0.3;
-        colors[i3] = c;
-        colors[i3 + 1] = c * 0.98;
-        colors[i3 + 2] = c * 1.04;
-      }
-
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-      const material = new THREE.PointsMaterial({
-        size: 1.4,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.26,
-        depthWrite: false
-      });
-
-      ambientSystem = new THREE.Points(geometry, material);
-      scene.add(ambientSystem);
-    }
+    }, { passive: true });
 
     function animate() {
+      currentRotateX += (targetRotateX - currentRotateX) * 0.06;
+      currentRotateY += (targetRotateY - currentRotateY) * 0.06;
+      currentLightX += (targetLightX - currentLightX) * 0.08;
+
+      stone.style.transform =
+        `translateX(7%) translateY(2%) rotateX(${currentRotateX}deg) rotateY(${currentRotateY}deg) scale(1)`;
+
+      highlight.style.transform =
+        `translateX(${currentLightX}%) skewX(-10deg)`;
+
       requestAnimationFrame(animate);
-      const t = clock.getElapsedTime();
-
-      if (particleSystem) {
-        const positions = particleSystem.geometry.attributes.position.array;
-        const worldPointer = screenToWorld(pointer.x, pointer.y);
-
-        for (let i = 0; i < positions.length / 3; i++) {
-          const i3 = i * 3;
-
-          const ox = basePositions[i3];
-          const oy = basePositions[i3 + 1];
-          const oz = basePositions[i3 + 2];
-
-          let px = positions[i3];
-          let py = positions[i3 + 1];
-          let pz = positions[i3 + 2];
-
-          let vx = velocities[i3];
-          let vy = velocities[i3 + 1];
-          let vz = velocities[i3 + 2];
-
-          const seed = randomSeeds[i];
-          const driftX = Math.sin(t * 0.9 + seed) * config.drift * 0.32;
-          const driftY = Math.cos(t * 1.1 + seed * 1.7) * config.drift * 0.46;
-          const driftZ = Math.sin(t * 0.7 + seed * 0.3) * config.drift * 0.95;
-
-          vx += ((ox + driftX) - px) * config.returnSpeed;
-          vy += ((oy + driftY) - py) * config.returnSpeed;
-          vz += ((oz + driftZ) - pz) * config.returnSpeed;
-
-          const dx = px - worldPointer.x;
-          const dy = py - worldPointer.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < config.repelRadius) {
-            const force = (1 - dist / config.repelRadius) * config.repelForce;
-            const angle = Math.atan2(dy, dx);
-            vx += Math.cos(angle) * force * 1.8;
-            vy += Math.sin(angle) * force * 1.8;
-            vz += force * 0.9;
-          }
-
-          vx *= config.damping;
-          vy *= config.damping;
-          vz *= config.damping;
-
-          px += vx;
-          py += vy;
-          pz += vz;
-
-          positions[i3] = px;
-          positions[i3 + 1] = py;
-          positions[i3 + 2] = pz;
-
-          velocities[i3] = vx;
-          velocities[i3 + 1] = vy;
-          velocities[i3 + 2] = vz;
-        }
-
-        particleSystem.geometry.attributes.position.needsUpdate = true;
-
-        stoneGroup.rotation.y += ((rotationTargetY + Math.sin(t * 0.5) * config.autoRotateStrength) - stoneGroup.rotation.y) * 0.045;
-        stoneGroup.rotation.x += ((rotationTargetX + Math.cos(t * 0.4) * 0.03) - stoneGroup.rotation.x) * 0.045;
-      }
-
-      if (ambientSystem) {
-        ambientSystem.rotation.y += 0.0008;
-        ambientSystem.rotation.x = Math.sin(t * 0.15) * 0.08;
-      }
-
-      renderer.render(scene, camera);
     }
 
-    function screenToWorld(clientX, clientY) {
-      if (!isFinite(clientX) || !isFinite(clientY)) return { x: 9999, y: 9999 };
-
-      const ndc = new THREE.Vector3(
-        (clientX / window.innerWidth) * 2 - 1,
-        -(clientY / window.innerHeight) * 2 + 1,
-        0.5
-      );
-
-      ndc.unproject(camera);
-      const dir = ndc.sub(camera.position).normalize();
-      const distance = -camera.position.z / dir.z;
-      const pos = camera.position.clone().add(dir.multiplyScalar(distance));
-
-      return { x: pos.x, y: pos.y };
-    }
-
-    function bindEvents() {
-      window.addEventListener('resize', resize);
-
-      window.addEventListener('pointermove', (e) => {
-        pointer.set(e.clientX, e.clientY);
-        if (pointerDown) {
-          rotationTargetY += e.movementX * 0.0028;
-          rotationTargetX += e.movementY * 0.0016;
-          rotationTargetX = clamp(rotationTargetX, -0.55, 0.55);
-          rotationTargetY = clamp(rotationTargetY, -0.95, 0.95);
-        }
-      });
-
-      window.addEventListener('pointerdown', () => {
-        pointerDown = true;
-      });
-
-      window.addEventListener('pointerup', () => {
-        pointerDown = false;
-      });
-
-      window.addEventListener('pointerleave', () => {
-        pointer.set(9999, 9999);
-        pointerDown = false;
-      });
-
-      window.addEventListener('touchend', () => {
-        pointer.set(9999, 9999);
-      });
-    }
-
-    function resize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    function clamp(v, min, max) {
-      return Math.max(min, Math.min(max, v));
-    }
-
-    function loadImage(src) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = src;
-      });
-    }
+    animate();
   </script>
 </body>
 </html>
